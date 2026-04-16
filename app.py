@@ -35,12 +35,47 @@ elif selection == "Full About SMANO":
     st.write("### Solution")
     st.info(config.ABOUT_SOLUTION)
 
+# ==========================================
+# PAGE: DONATION PORTAL
+# ==========================================
 elif selection == "Donation Portal":
-    st.subheader("Support a School")
-    amount = st.number_input("Amount (ETH)", min_value=0.01)
-    if st.button("Donate"):
-        st.write(f"Processing {amount} ETH (includes 10% fee)")
+    st.subheader("Secure Donation Portal")
+    st.write("In accordance with SMANO rules, donors must be registered with CSR before contributing.")
 
+    if not user_address_js:
+        st.warning("Please connect your MetaMask wallet to verify your registration status.")
+    else:
+        # Check if the connected address is registered in the smart contract
+        is_registered = contract.functions.registeredDonors(user_address_js).call()
+
+        if not is_registered:
+            st.error("🚨 You are not registered as a donor yet.")
+            st.info("Registration is compulsory to ensure CSR compliance and transparency.")
+            if st.button("Register Now"):
+                # This calls the registerDonor function from your ABI
+                st.info("Please confirm the registration transaction in MetaMask...")
+                # Note: In a full app, you'd send the transaction here via web3.js/eval
+        else:
+            st.success("✅ Donor Identity Verified (Registered with CSR)")
+            
+            with st.expander("Terms and Conditions", expanded=False):
+                st.write("Agreeing to terms after downloading the app is compulsory for accountability.")
+                agreed = st.checkbox("I agree to the SMANO Terms and Conditions")
+
+            amount = st.number_input("Amount to Donate (ETH)", min_value=0.01, step=0.01)
+            
+            if amount > 0:
+                fee = amount * config.SERVICE_FEE_RATE
+                net_amount = amount - fee
+                st.write(f"**Gross Donation:** {amount} ETH")
+                st.write(f"**10% Service Fee:** {fee:.4f} ETH")
+                st.success(f"**Net funds allocated to schools:** {net_amount:.4f} ETH")
+
+            if st.button("Complete Donation"):
+                if not agreed:
+                    st.error("You must agree to the Terms and Conditions to proceed.")
+                else:
+                    st.info("Opening MetaMask for secure donation...")
 elif selection == "Logistics & Tracking":
     st.subheader("Real-Time Tracking")
     st.write("Enter a batch ID to see the status from Supplier to School.")
