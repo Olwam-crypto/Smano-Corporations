@@ -1,115 +1,81 @@
-# pip install streamlit web3 streamlit-js-eval
-import streamlit as st
-import base64
-from web3 import Web3
-from streamlit_js_eval import streamlit_js_eval
-import config
-
-# --- LOGO DATA ---
-# Paste your logo's Base64 string here
-LOGO_B64 = "YOUR_LOGO_BASE64_STRING_HERE"
-
-st.set_page_config(page_title=config.APP_NAME, layout="wide")
-
-# Header Logic
-if LOGO_B64 != "YOUR_LOGO_BASE64_STRING_HERE":
-    st.markdown(f'<div style="text-align: center;"><img src="data:image/png;base64,{LOGO_B64}" width="200"></div>', unsafe_allow_html=True)
-else:
-    st.title(config.APP_NAME)
-st.caption(f"**{config.TAGLINE}**")
-st.divider()
-
-# Blockchain Connection
-w3 = Web3(Web3.HTTPProvider(config.RPC_URL))
-contract = w3.eth.contract(address=w3.to_checksum_address(config.CONTRACT_ADDRESS), abi=config.CONTRACT_ABI)
-user_address_js = streamlit_js_eval(js_expressions="window.ethereum ? window.ethereum.selectedAddress : null", key="wallet_check")
-
-# Sidebar Navigation
-pages = ["Overview", "Full About SMANO", "Donation Portal", "Supplier Management", "Logistics & Tracking", "Admin", "Subscribe (R60)"]
-selection = st.sidebar.radio("Go to", pages)
-
+# # ==========================================
+# SMANO CONFIGURATION FILE
 # ==========================================
-# PAGE: OVERVIEW
-# ==========================================
-if selection == "Overview":
-    st.subheader("Platform Status")
-    col1, col2, col3 = st.columns(3)
-    
-    try:
-        batch_count = contract.functions.batchCount().call()
-        col1.metric("Total Batches", batch_count)
-        col2.metric("Service Fee", f"{int(config.SERVICE_FEE_RATE * 100)}%")
-        col3.metric("Network", "Sepolia Testnet")
-    except:
-        st.warning("Connect to MetaMask to view live metrics.")
 
-# ==========================================
-# PAGE: FULL ABOUT SMANO
-# ==========================================
-elif selection == "Full About SMANO":
-    st.subheader("Mission & Transparency") [cite: 7, 8]
-    st.write(config.ABOUT_MISSION) [cite: 3, 4]
-    
-    st.info(f"**The SMANO Solution:** {config.ABOUT_SOLUTION}") [cite: 7, 10]
-    
-    st.markdown("### Ecosystem Roles") [cite: 13]
-    for role, desc in config.ABOUT_ROLES.items():
-        st.write(f"**{role}:** {desc}") [cite: 14, 15, 17, 18, 20]
+# --- Application Display Text ---
+APP_NAME = "SMANO"
+TAGLINE = "Transparent, verifiable, and permanent supply chains for education."
+DESCRIPTION = "A decentralized platform connecting donors, verified suppliers, and logistics."
 
-# ==========================================
-# PAGE: DONATION PORTAL
-# ==========================================
-elif selection == "Donation Portal":
-    st.subheader("Secure Donation Portal")
-    st.write("Donors must be registered with CSR to contribute.") [cite: 34]
-    
-    with st.expander("Terms and Conditions", expanded=False):
-        st.write("Agreeing to terms after downloading the app is compulsory.") [cite: 35]
-        agreed = st.checkbox("I agree to the SMANO Terms and Conditions")
+# --- Blockchain Network Settings ---
+RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"
+CONTRACT_ADDRESS = "0xD1eE418868CeA61E6fE6079f9E3b3990A1C116D1"
 
-    amount = st.number_input("Amount to Donate (ETH)", min_value=0.01, step=0.01)
-    
-    if amount > 0:
-        fee = amount * config.SERVICE_FEE_RATE
-        net_amount = amount - fee
-        st.write(f"Gross Donation: {amount} ETH")
-        st.write(f"10% Service Fee: {fee:.4f} ETH") [cite: 34, 39]
-        st.success(f"Net funds allocated to schools: {net_amount:.4f} ETH") [cite: 9]
+# --- Financial Rules ---
+SERVICE_FEE_RATE = 0.10 
+SUBSCRIPTION_FEE_ZAR = 60.00
 
-    if st.button("Donate Now"):
-        if not agreed:
-            st.error("You must agree to the Terms and Conditions first.")
-        else:
-            st.info("Initiating transaction... Please check MetaMask.")
+# --- Human-Readable Maps ---
+SUPPLIER_STATUS_MAP = {0: "Unregistered", 1: "Applied", 2: "Verified", 3: "Suspended", 4: "Rejected"}
+ITEM_STATUS_MAP = {0: "Order Received", 1: "At Supplier", 2: "In Transit", 3: "Delivered", 4: "Passed Quality", 5: "Failed Quality"}
 
-# ==========================================
-# PAGE: LOGISTICS & TRACKING
-# ==========================================
-elif selection == "Logistics & Tracking":
-    st.subheader("Real-Time Supply Chain Tracking") [cite: 40]
-    st.write("Follow the lifecycle of learning materials and food.") [cite: 23]
-    
-    batch_id = st.number_input("Enter Batch ID to Track", min_value=0, step=1)
-    
-    if st.button("Track Progress"):
-        # This simulates the Lifecycle states from the document
-        st.markdown("### Current Status")
-        st.steps([
-            "Order Received",
-            "At Supplier",
-            "In Transit",
-            "Delivered",
-            "Quality Inspection"
-        ]) [cite: 23, 25]
+# --- Content from SMANO Documentation ---
+ABOUT_MISSION = (
+    "Research shows a critical lack of infrastructure and basic necessities in disadvantaged schools. "
+    "SMANO addresses this lack of transparency and accountability to restore donor trust."
+)
 
+ABOUT_SOLUTION = (
+    "SMANO creates a transparent, trackable donation supply chain system. "
+    "Every contribution creates an indelible mark on the blockchain."
+)
+
+ABOUT_ROLES = {
+    "Admin": "Deploys contract and performs verification.",
+    "Suppliers": "Certified providers of food and necessities.",
+    "Transporter": "Logistics companies shipping goods tracked in real-time.",
+    "Donors": "Provide funds for learning materials and food vouchers."
+}
+
+# --- Contract ABI ---
+CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"uint256","name":"batchId","type":"uint256"},{"indexed":False,"internalType":"enum SMANO.ItemStatus","name":"status","type":"uint8"}],"name":"BatchStatusUpdated","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"donor","type":"address"},{"indexed":False,"internalType":"uint256","name":"grossAmount","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"fee","type":"uint256"}],"name":"DonationReceived","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"supplier","type":"address"},{"indexed":False,"internalType":"string","name":"name","type":"string"}],"name":"SupplierApplied","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"supplier","type":"address"},{"indexed":False,"internalType":"enum SMANO.SupplierStatus","name":"newStatus","type":"uint8"},{"indexed":False,"internalType":"string","name":"reason","type":"string"}],"name":"SupplierStatusChanged","type":"event"},{"inputs":[],"name":"SERVICE_FEE_PERCENT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_type","type":"string"},{"internalType":"bytes32","name":"_hash","type":"bytes32"},{"internalType":"uint256","name":"_issueDate","type":"uint256"},{"internalType":"uint256","name":"_expiryDate","type":"uint256"}],"name":"addCertification","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_country","type":"string"},{"internalType":"string","name":"_region","type":"string"},{"internalType":"string","name":"_company","type":"string"}],"name":"applyAsSupplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"batchCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"batches","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"description","type":"string"},{"internalType":"enum SMANO.ItemStatus","name":"status","type":"uint8"},{"internalType":"address","name":"supplier","type":"address"},{"internalType":"address","name":"transporter","type":"address"},{"internalType":"address","name":"destinationSchool","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"donate","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"}],"name":"hasValidCertification","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"registerDonor","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"registeredDonors","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"suppliers","outputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"country","type":"string"},{"internalType":"string","name":"region","type":"string"},{"internalType":"string","name":"companyName","type":"string"},{"internalType":"enum SMANO.SupplierStatus","name":"status","type":"uint8"},{"internalType":"string","name":"reason","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_batchId","type":"uint256"},{"internalType":"enum SMANO.ItemStatus","name":"_newStatus","type":"uint8"}],"name":"updateBatchStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"},{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"verifyCertification","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"},{"internalType":"bool","name":"_approve","type":"bool"},{"internalType":"string","name":"_reason","type":"string"}],"name":"verifySupplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}]
+# SMANO CONFIGURATION FILE
 # ==========================================
-# PAGE: SUBSCRIBE (R60)
-# ==========================================
-elif selection == "Subscribe (R60)":
-    st.subheader("Support SMANO")
-    st.markdown(f"## R{config.SUBSCRIPTION_FEE_ZAR} per month")
-    st.write("Help us expand our reach to more schools in need.") [cite: 37]
-    
-    if st.button("Subscribe"):
-        st.balloons()
-        st.success("Thank you for supporting educational transparency!")
+
+# --- Application Display Text ---
+APP_NAME = "SMANO"
+TAGLINE = "Transparent, verifiable, and permanent supply chains for education."
+DESCRIPTION = "A decentralized platform connecting donors, verified suppliers, and logistics."
+
+# --- Blockchain Network Settings ---
+RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"
+CONTRACT_ADDRESS = "0xD1eE418868CeA61E6fE6079f9E3b3990A1C116D1"
+
+# --- Financial Rules ---
+SERVICE_FEE_RATE = 0.10 
+SUBSCRIPTION_FEE_ZAR = 60.00
+
+# --- Human-Readable Maps ---
+SUPPLIER_STATUS_MAP = {0: "Unregistered", 1: "Applied", 2: "Verified", 3: "Suspended", 4: "Rejected"}
+ITEM_STATUS_MAP = {0: "Order Received", 1: "At Supplier", 2: "In Transit", 3: "Delivered", 4: "Passed Quality", 5: "Failed Quality"}
+
+# --- Content from SMANO Documentation ---
+ABOUT_MISSION = (
+    "Research shows a critical lack of infrastructure and basic necessities in disadvantaged schools. "
+    "SMANO addresses this lack of transparency and accountability to restore donor trust."
+)
+
+ABOUT_SOLUTION = (
+    "SMANO creates a transparent, trackable donation supply chain system. "
+    "Every contribution creates an indelible mark on the blockchain."
+)
+
+ABOUT_ROLES = {
+    "Admin": "Deploys contract and performs verification.",
+    "Suppliers": "Certified providers of food and necessities.",
+    "Transporter": "Logistics companies shipping goods tracked in real-time.",
+    "Donors": "Provide funds for learning materials and food vouchers."
+}
+
+# --- Contract ABI ---
+CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"uint256","name":"batchId","type":"uint256"},{"indexed":False,"internalType":"enum SMANO.ItemStatus","name":"status","type":"uint8"}],"name":"BatchStatusUpdated","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"donor","type":"address"},{"indexed":False,"internalType":"uint256","name":"grossAmount","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"fee","type":"uint256"}],"name":"DonationReceived","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"supplier","type":"address"},{"indexed":False,"internalType":"string","name":"name","type":"string"}],"name":"SupplierApplied","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"supplier","type":"address"},{"indexed":False,"internalType":"enum SMANO.SupplierStatus","name":"newStatus","type":"uint8"},{"indexed":False,"internalType":"string","name":"reason","type":"string"}],"name":"SupplierStatusChanged","type":"event"},{"inputs":[],"name":"SERVICE_FEE_PERCENT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_type","type":"string"},{"internalType":"bytes32","name":"_hash","type":"bytes32"},{"internalType":"uint256","name":"_issueDate","type":"uint256"},{"internalType":"uint256","name":"_expiryDate","type":"uint256"}],"name":"addCertification","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_country","type":"string"},{"internalType":"string","name":"_region","type":"string"},{"internalType":"string","name":"_company","type":"string"}],"name":"applyAsSupplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"batchCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"batches","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"description","type":"string"},{"internalType":"enum SMANO.ItemStatus","name":"status","type":"uint8"},{"internalType":"address","name":"supplier","type":"address"},{"internalType":"address","name":"transporter","type":"address"},{"internalType":"address","name":"destinationSchool","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"donate","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"}],"name":"hasValidCertification","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"registerDonor","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"registeredDonors","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"suppliers","outputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"country","type":"string"},{"internalType":"string","name":"region","type":"string"},{"internalType":"string","name":"companyName","type":"string"},{"internalType":"enum SMANO.SupplierStatus","name":"status","type":"uint8"},{"internalType":"string","name":"reason","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_batchId","type":"uint256"},{"internalType":"enum SMANO.ItemStatus","name":"_newStatus","type":"uint8"}],"name":"updateBatchStatus","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"},{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"verifyCertification","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_supplier","type":"address"},{"internalType":"bool","name":"_approve","type":"bool"},{"internalType":"string","name":"_reason","type":"string"}],"name":"verifySupplier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}]
