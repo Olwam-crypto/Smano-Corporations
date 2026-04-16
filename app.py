@@ -15,7 +15,11 @@ st.divider()
 # --- BLOCKCHAIN CONNECTION ---
 w3 = Web3(Web3.HTTPProvider(config.RPC_URL))
 contract = w3.eth.contract(address=w3.to_checksum_address(config.CONTRACT_ADDRESS), abi=config.CONTRACT_ABI)
+# 1. First, define the variable by running the JavaScript evaluator
+user_address_js = streamlit_js_eval(js_expressions="window.ethereum ? window.ethereum.selectedAddress : null", key="wallet_check")
 
+# 2. Then, you can use it in your sidebar or pages
+# (The rest of your code follows below...)
 # --- SIDEBAR NAVIGATION ---
 pages = ["Overview", "Full About SMANO", "Donation Portal", "Logistics & Tracking", "Subscribe (R60)"]
 selection = st.sidebar.radio("Go to", pages)
